@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Study English Supporter</title>
     <style>
         body {
@@ -10,168 +11,215 @@
             margin: 0 auto;
             padding: 20px;
         }
-        .dialogue {
+        .dialogue-container {
             display: flex;
             margin-bottom: 20px;
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-            transition: background-color 0.2s;
+            gap: 20px;
         }
-        .dialogue:hover {
-            background-color: #f5f5f5;
-        }
-        .text {
+        .english {
             flex: 1;
-            white-space: pre-wrap;
             padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            cursor: pointer;
+            user-select: text;
+        }
+        .japanese {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            white-space: pre-wrap;
             cursor: pointer;
         }
-        .japanese-debug {
-            flex: 1;
-            white-space: pre-wrap;
-            padding: 10px;
-            border-left: 1px solid #eee;
-            color: #666;
+        .page-break {
+            border-top: 2px dashed #999;
+            margin: 20px 0;
         }
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 30px;
-        }
-        .instructions {
-            text-align: center;
-            color: #666;
-            margin-bottom: 20px;
-            font-style: italic;
-        }
-        .button {
-            background-color: #4CAF50;
-            border: none;
-            color: white;
+        button {
             padding: 5px 10px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 14px;
-            margin: 4px 2px;
+            margin-left: 10px;
             cursor: pointer;
-            border-radius: 4px;
         }
-        .button:hover {
-            background-color: #45a049;
-        }
-        .hidden-japanese {
+        .hidden {
             display: none;
         }
+        .dictionary-menu {
+            position: fixed;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 5px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+        .dictionary-menu button {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 5px 10px;
+            border: none;
+            background: none;
+            cursor: pointer;
+        }
+        .dictionary-menu button:hover {
+            background: #f0f0f0;
+        }
     </style>
-    <script>
-        const japaneseTexts = {{.JapaneseTexts}};
-        const japaneseIndices = new Map();
-        const pageSize = 10; // 1ページあたりのダイアログ数
-
-        function toggleText(element) {
-            const english = element.getAttribute('data-english');
-            const japanese = element.getAttribute('data-japanese');
-            const textElement = element.querySelector('.text');
-            const currentText = textElement.textContent.trim();
-            
-            if (currentText === english) {
-                textElement.textContent = japanese;
-            } else {
-                textElement.textContent = english;
-            }
-        }
-
-        function getCurrentPage(index) {
-            return Math.floor(index / pageSize);
-        }
-
-        function loadNextJapanese(element) {
-            const index = parseInt(element.getAttribute('data-index'));
-            const textElement = element.querySelector('.text');
-            const japaneseDebugElement = element.querySelector('.japanese-debug');
-            
-            // 現在のインデックスを取得（初期値は0）
-            let currentIndex = japaneseIndices.get(index) || 0;
-            const currentPage = getCurrentPage(index);
-            
-            // 次の日本語テキストを取得
-            if (currentIndex + 1 < japaneseTexts.length) {
-                const nextJapanese = japaneseTexts[currentIndex + 1];
-                
-                // 現在の日本語テキストを取得
-                const currentJapanese = element.getAttribute('data-japanese');
-                
-                // 新しい日本語テキストを作成（現在のテキスト + 改行 + 次のテキスト）
-                const newJapanese = currentJapanese + '\n' + nextJapanese;
-                
-                // テキストを更新
-                textElement.textContent = newJapanese;
-                japaneseDebugElement.textContent = newJapanese;
-                element.setAttribute('data-japanese', newJapanese);
-                
-                // インデックスを更新
-                japaneseIndices.set(index, currentIndex + 1);
-
-                // 同じページ内の後続のダイアログの日本語テキストをずらす
-                const dialogues = document.querySelectorAll('.dialogue');
-                for (let i = index + 1; i < dialogues.length; i++) {
-                    if (getCurrentPage(i) === currentPage) {
-                        const dialogue = dialogues[i];
-                        const currentIndex = japaneseIndices.get(i) || i;
-                        const nextIndex = currentIndex + 1;
-                        if (nextIndex < japaneseTexts.length) {
-                            const nextText = japaneseTexts[nextIndex];
-                            console.log(`Updating dialogue ${i}: currentIndex=${currentIndex}, nextIndex=${nextIndex}, nextText=${nextText}`);
-                            dialogue.setAttribute('data-japanese', nextText);
-                            const debugElement = dialogue.querySelector('.japanese-debug');
-                            if (debugElement) {
-                                debugElement.textContent = nextText;
-                                console.log(`Updated debug element for dialogue ${i}`);
-                            } else {
-                                console.log(`Debug element not found for dialogue ${i}`);
-                            }
-                            japaneseIndices.set(i, nextIndex);
-                        }
-                    } else {
-                        break; // 別のページに到達したら終了
-                    }
-                }
-            }
-        }
-
-        // 初期化時に各ダイアログのインデックスを設定
-        document.addEventListener('DOMContentLoaded', function() {
-            const dialogues = document.querySelectorAll('.dialogue');
-            dialogues.forEach((dialogue, index) => {
-                // インデックスを設定
-                japaneseIndices.set(index, index);
-                
-                // 初期の日本語テキストを設定
-                const initialJapanese = japaneseTexts[index];
-                dialogue.setAttribute('data-japanese', initialJapanese);
-                
-                // デバッグ表示を更新
-                const japaneseDebugElement = dialogue.querySelector('.japanese-debug');
-                japaneseDebugElement.textContent = initialJapanese;
-            });
-        });
-    </script>
 </head>
 <body>
-    <h1>英語・日本語セリフ比較</h1>
-    <div class="instructions">クリックで英語と日本語を切り替え、ボタンで次の日本語を追加</div>
-    {{range $index, $dialogue := .Dialogues}}
-    <div class="dialogue" data-index="{{$index}}" data-english="{{$dialogue.English}}" data-japanese="{{$dialogue.Japanese}}">
-        <div class="text" onclick="toggleText(this.parentElement)">{{$dialogue.English}}</div>
-        <div class="japanese-debug">{{$dialogue.Japanese}}</div>
-        <button class="button" onclick="loadNextJapanese(this.parentElement)">次の日本語</button>
-    </div>
-    {{end}}
-    <div class="hidden-japanese">
-        {{range $index, $text := .JapaneseTexts}}
-        <div data-japanese-index="{{$index}}">{{$text}}</div>
-        {{end}}
-    </div>
+    <div id="content"></div>
+
+    <script>
+        const englishData = {{.EnglishData}};
+        const japaneseData = {{.JapaneseData}};
+        let currentLineIndices = {};
+
+        // 辞書メニューを作成
+        const dictionaryMenu = document.createElement('div');
+        dictionaryMenu.className = 'dictionary-menu hidden';
+        document.body.appendChild(dictionaryMenu);
+
+        // 辞書サイトの設定
+        const dictionaries = [
+            { name: 'Weblio', url: 'https://ejje.weblio.jp/content/' },
+            { name: '英辞郎', url: 'https://eow.alc.co.jp/search?q=' },
+            { name: 'goo辞書', url: 'https://dictionary.goo.ne.jp/word/en/' },
+            { name: 'Cambridge英和', url: 'https://dictionary.cambridge.org/ja/dictionary/english-japanese/' }
+        ];
+
+        // 辞書メニューを設定
+        dictionaries.forEach(dict => {
+            const button = document.createElement('button');
+            button.textContent = dict.name;
+            button.onclick = () => {
+                const selectedText = window.getSelection().toString().trim();
+                if (selectedText) {
+                    window.open(dict.url + encodeURIComponent(selectedText), '_blank');
+                }
+                dictionaryMenu.classList.add('hidden');
+            };
+            dictionaryMenu.appendChild(button);
+        });
+
+        // 選択テキストの処理
+        document.addEventListener('mouseup', (e) => {
+            const selectedText = window.getSelection().toString().trim();
+            const englishDiv = e.target.closest('.english');
+            
+            if (selectedText && englishDiv) {
+                const englishRect = englishDiv.getBoundingClientRect();
+
+                // 英語テキストの右側にメニューを表示（ビューポート座標を使用）
+                dictionaryMenu.style.left = (englishRect.right + 5) + 'px';
+                dictionaryMenu.style.top = englishRect.top + 'px';
+                dictionaryMenu.classList.remove('hidden');
+            } else {
+                dictionaryMenu.classList.add('hidden');
+            }
+        });
+
+        // メニュー外クリックで非表示
+        document.addEventListener('mousedown', (e) => {
+            if (!dictionaryMenu.contains(e.target)) {
+                dictionaryMenu.classList.add('hidden');
+            }
+        });
+
+        function displayAllData() {
+            const content = document.getElementById('content');
+            content.innerHTML = '';
+
+            englishData.pages.forEach((engPage, pageIndex) => {
+                engPage.lines.forEach((engLine, lineIndex) => {
+                    const container = document.createElement('div');
+                    container.className = 'dialogue-container';
+
+                    const engDiv = document.createElement('div');
+                    engDiv.className = 'english';
+                    engDiv.textContent = engLine;
+                    engDiv.onclick = (e) => {
+                        e.stopPropagation();
+                        toggleDisplay(pageIndex, lineIndex);
+                    };
+                    engDiv.setAttribute('data-key', pageIndex + '_' + lineIndex);
+
+                    const jpDiv = document.createElement('div');
+                    jpDiv.className = 'japanese hidden';
+                    const key = pageIndex + '_' + lineIndex;
+                    jpDiv.textContent = japaneseData.pages[pageIndex].lines[lineIndex] || '';
+                    jpDiv.onclick = (e) => {
+                        e.stopPropagation();
+                        toggleDisplay(pageIndex, lineIndex);
+                    };
+                    jpDiv.setAttribute('data-key', key);
+
+                    const button = document.createElement('button');
+                    button.textContent = '次の日本語';
+                    button.className = 'hidden';
+                    button.onclick = (e) => {
+                        e.stopPropagation();
+                        if (!currentLineIndices[key]) {
+                            currentLineIndices[key] = lineIndex;
+                        }
+                        currentLineIndices[key]++;
+
+                        // 現在の行の日本語テキストを更新
+                        const nextIndex = currentLineIndices[key];
+                        const nextText = japaneseData.pages[pageIndex].lines[nextIndex] || '';
+                        if (nextText) {
+                            jpDiv.textContent = jpDiv.textContent + '\n' + nextText;
+                        }
+
+                        // 次の行以降の日本語テキストを更新
+                        for (let i = lineIndex + 1; i < engPage.lines.length; i++) {
+                            const nextKey = pageIndex + '_' + i;
+                            if (!currentLineIndices[nextKey]) {
+                                currentLineIndices[nextKey] = i;
+                            }
+                            currentLineIndices[nextKey]++;
+                            const nextDiv = document.querySelector('.japanese[data-key="' + nextKey + '"]');
+                            if (nextDiv) {
+                                const nextLineIndex = currentLineIndices[nextKey];
+                                nextDiv.textContent = japaneseData.pages[pageIndex].lines[nextLineIndex] || '';
+                            }
+                        }
+                    };
+
+                    container.appendChild(engDiv);
+                    container.appendChild(jpDiv);
+                    container.appendChild(button);
+                    content.appendChild(container);
+                });
+
+                // ページ区切りを表示（最後のページ以外）
+                if (pageIndex < englishData.pages.length - 1) {
+                    const pageBreak = document.createElement('div');
+                    pageBreak.className = 'page-break';
+                    content.appendChild(pageBreak);
+                }
+            });
+        }
+
+        function toggleDisplay(pageIndex, lineIndex) {
+            const key = pageIndex + '_' + lineIndex;
+            const engDiv = document.querySelector('.english[data-key="' + key + '"]');
+            const jpDiv = document.querySelector('.japanese[data-key="' + key + '"]');
+            const button = jpDiv.nextElementSibling;
+
+            if (jpDiv.classList.contains('hidden')) {
+                // 英語から英語+日本語に切り替え
+                jpDiv.classList.remove('hidden');
+                button.classList.remove('hidden');
+            } else {
+                // 英語+日本語から英語のみに切り替え
+                jpDiv.classList.add('hidden');
+                button.classList.add('hidden');
+            }
+        }
+
+        // データを表示
+        displayAllData();
+    </script>
 </body>
 </html> 
