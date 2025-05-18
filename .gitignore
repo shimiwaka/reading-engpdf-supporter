@@ -1,4 +1,3 @@
-test_eng.pdf
-test_jpn.pdf
+*.pdf
 diff.go
 dialogue_comparison.html
